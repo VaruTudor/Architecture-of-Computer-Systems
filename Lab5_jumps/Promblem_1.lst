@@ -1,0 +1,29 @@
+     1                                  bits 32
+     2                                  global start
+     3                                  extern exit
+     4                                  import exit msvcrt.dll
+     5                                  
+     6                                  segment data use32 class=data
+     7 00000000 01020304                    S db 1,2,3,4    ; declare the string of bytes
+     8                                      len equ $-S     ; compute the length of the string in len
+     9 00000004 00<rept>                    D times len-1 db 0      ; reserve len-1 bytes for the destination string and initialize it
+    10                                      
+    11                                  segment code use32 class=code
+    12                                      start:
+    13 00000000 B903000000                      mov ecx,len-1   ; we put the length len - 1 in ECX in order to make a loop of len-1 steps
+    14 00000005 BE[00000000]                    mov esi,S   ;we put string S in esi
+    15 0000000A BF[04000000]                    mov edi,D   ;we put string D in edi
+    16                                          
+    17                                          repeat:
+    18 0000000F 8A06                                mov al,[esi]  ;al takes bytes form s
+    19 00000011 F66601                              mul byte[esi+1]     ;we multiply al with the next byte from S
+    20                                              
+    21 00000014 8807                                mov [edi],al    ; we move al in the byte of edi 
+    22 00000016 46                                  inc esi ; esi moves to the next byte
+    23 00000017 47                                  inc edi ; edi moves to the next byte
+    24                                              
+    25 00000018 E2F5                            loop repeat
+    26                                      
+    27 0000001A 6A00                            push dword 0
+    28 0000001C FF15[00000000]                  call [exit]
+    29                                          

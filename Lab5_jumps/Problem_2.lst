@@ -1,0 +1,55 @@
+     1                                  bits 32
+     2                                  global start
+     3                                  extern exit
+     4                                  import exit msvcrt.dll
+     5                                  
+     6                                  
+     7                                  ;Given a character string S, obtain the string D containing all special characters (!@#$%^&*) of the string S.
+     8                                  ;Example:
+     9                                  ;S: '+', '4', '2', 'a', '@', '3', '$', '*'
+    10                                  ;D: '@','$','*'
+    11                                  
+    12                                      ; copies every chr???????
+    13                                  segment data use32 class=data
+    14 00000000 2B3432614033242A            S db '+', '4', '2', 'a', '@', '3', '$', '*'     ; declare the string of bytes     
+    15                                      len equ $-S     ; compute the length of the string in len
+    16 00000008 00<rept>                    D times len db 0    ; reserve len bytes for the destination string and initialize it
+    17                                      
+    18                                  segment code use32 class=code
+    19                                      start:
+    20 00000000 B908000000                      mov ecx,len ; we put the length len in ECX in order to make a loop of len steps
+    21 00000005 BE[00000000]                    mov esi,S   ;we put string S in esi
+    22 0000000A BF[08000000]                    mov edi,D   ;we put string D in edi
+    23 0000000F FC                              cld     ;DF = 0
+    24                                          repeat:
+    25 00000010 8A06                                mov al,[esi]  ;AL takes the byte from the offset [s+esi]
+    26 00000012 46                                  inc esi ; esi moves to the next byte
+    27                                              
+    28 00000013 3C21                                cmp al,'!'  ; compares al with '!'
+    29 00000015 741E                                je change  ; jums to change is equal (zf=1) 
+    30 00000017 3C40                                cmp al,'@'
+    31 00000019 741A                                je change
+    32 0000001B 3C23                                cmp al,'#'
+    33 0000001D 7416                                je change
+    34 0000001F 3C24                                cmp al,'$'
+    35 00000021 7412                                je change
+    36 00000023 3C25                                cmp al,'%'
+    37 00000025 740E                                je change
+    38 00000027 3C5E                                cmp al,'^'
+    39 00000029 740A                                je change
+    40 0000002B 3C26                                cmp al,'&'
+    41 0000002D 7406                                je change
+    42 0000002F 3C2A                                cmp al,'*'
+    43 00000031 7402                                je change
+    44                                              
+    45 00000033 E2DB                                loop repeat
+    46                                              
+    47                                              change:
+    48                                                  ; add character to D
+    49 00000035 8807                                    mov [edi],al
+    50 00000037 47                                      inc edi
+    51                                  
+    52 00000038 E2D6                                loop repeat
+    53                                          
+    54 0000003A 6A00                        push dword 0
+    55 0000003C FF15[00000000]              call [exit]

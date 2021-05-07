@@ -1,0 +1,49 @@
+     1                                  bits 32
+     2                                  global start
+     3                                  extern exit
+     4                                  import exit msvcrt.dll
+     5                                  
+     6                                  ;Two byte strings S1 and S2 are given. Obtain the string D by concatenating the elements of S1 from the left hand side to the right hand side and the elements of S2 from the right hand side to the left hand side.
+     7                                  ;Example:
+     8                                  ;S1: 1, 2, 3, 4
+     9                                  ;S2: 5, 6, 7
+    10                                  ;D: 1, 2, 3, 4, 7, 6, 5
+    11                                  
+    12                                  ;can we use cld, std????
+    13                                  segment data use32 class=data
+    14 00000000 01020304                    S1 db 1, 2, 3, 4
+    15                                      lenS1 equ $-S1
+    16 00000004 050607                      S2 db 5, 6, 7
+    17                                      lenS2 equ $-S2
+    18 00000007 00<rept>                    D times lenS1+lenS2 db 0
+    19                                      
+    20                                  segment code use32 class=code
+    21                                      start:
+    22 00000000 BE[00000000]                    mov esi,S1   ;moves S1 in esi
+    23 00000005 BF[07000000]                    mov edi,D   ;moves D in edi
+    24 0000000A B904000000                      mov ecx,lenS1   ;moves lenS1 in ecx in order to perform the loop lenS1 times
+    25 0000000F FC                              CLD     ;DF = 0
+    26                                          repeat1:
+    27 00000010 FC                                  CLD
+    28 00000011 8A06                                mov al, [esi]    ;moves byte from in al
+    29 00000013 46                                  inc esi          ;moves esi to the next byte in S1
+    30 00000014 8807                                mov [edi],al     ;moves the byte from al in edi
+    31 00000016 47                                  inc edi         ;moves edi to the next byte in D
+    32 00000017 E2F7                                loop repeat1
+    33                                              
+    34 00000019 B903000000                      mov ecx,lenS2   ;moves lenS2 in ecx in order to perform the loop lenS1 times  
+    35 0000001E BE02000000                      mov esi,lenS2-1     ;moves lenS2-1 in esi in order to start from the end of the strin
+    36                                          
+    37                                          repeat2:
+    38 00000023 8A86[04000000]                      mov al,[S2+esi]     ;moves in al byte(from the right)  ----> can we use cld, std????
+    39 00000029 8807                                mov [edi],al    ;moves the byte in edi
+    40 0000002B 4E                                  dec esi     ;esi -= 1
+    41 0000002C 47                                  inc edi     ;moves edi to the next byte
+    42 0000002D E2F4                                loop repeat2
+    43                                      
+    44 0000002F 6A00                        push dword 0
+    45 00000031 FF15[00000000]              call [exit]
+    46                                          
+    47                                          
+    48                                          
+    49                                          

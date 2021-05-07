@@ -1,0 +1,62 @@
+     1                                  bits 32
+     2                                  global start
+     3                                  extern exit
+     4                                  import exit msvcrt.dll
+     5                                  
+     6                                  segment data use32 class=data
+     7                                      ;A: 2, 1, 3, -3
+     8                                      ;B: 4, 5, -5, 7
+     9                                      ;R: 1, 3, 5, 7
+    10 00000000 020103FD                    a db 2,1,3,-3
+    11                                      lenA equ $-a
+    12 00000004 0405FB07                    b db 4,5,-5,7
+    13                                      lenB equ $-b
+    14 00000008 00<rept>                    r times lenA+lenB db 0
+    15                                      
+    16                                  segment code use32 class=code
+    17                                      start:
+    18 00000000 BE00000000                      mov esi, 0
+    19 00000005 B904000000                      mov ecx, lenA
+    20 0000000A BF00000000                      mov edi,0
+    21                                          repeat:
+    22 0000000F 8A9E[00000000]                      mov bl,[a+esi]   ; bl=[esi], esi+=1
+    23 00000015 88D8                                mov al,bl        ; al:=bl
+    24 00000017 2401                                and al,00000001b ; al:=00000000+last bit of a1  
+    25 00000019 3C00                                cmp al,0
+    26 0000001B 7700                                ja check_sign1
+    27                                              check_sign1:    ; checks if a number is positive
+    28 0000001D 80FB00                                  cmp bl,0
+    29 00000020 7D00                                    jge add_number1
+    30                                          
+    31                                              add_number1:    ; adds a number if it s positive and odd
+    32 00000022 889F[08000000]                          mov [r+edi],bl
+    33 00000028 47                                      inc edi                
+    34                                              
+    35 00000029 46                                  inc esi
+    36 0000002A E2E3                                loop repeat
+    37                                      
+    38 0000002C BE00000000                      mov esi, 0
+    39 00000031 B904000000                      mov ecx, lenA
+    40                                          repeat2:
+    41 00000036 8A9E[04000000]                      mov bl,[b+esi]
+    42 0000003C 88D8                                mov al,bl
+    43 0000003E 2401                                and al,00000001b ; al:=00000000+last bit of a1  
+    44 00000040 3C00                                cmp al,0
+    45 00000042 7700                                ja check_sign2
+    46                                              check_sign2:    ; checks if a number is positive
+    47 00000044 80FB00                                  cmp bl,0
+    48 00000047 7D00                                    jge add_number2
+    49                                          
+    50                                              add_number2:    ; adds a number if it s positive and odd
+    51 00000049 889F[08000000]                          mov [r+edi],bl
+    52 0000004F 47                                      inc edi                
+    53                                              
+    54 00000050 46                                  inc esi
+    55 00000051 E2E3                                loop repeat2
+    56                                  
+    57 00000053 6A00                        push dword 0
+    58 00000055 FF15[00000000]              call [exit]
+    59                                      
+    60                                      
+    61                                      
+    62                                      ;adds all numbers???

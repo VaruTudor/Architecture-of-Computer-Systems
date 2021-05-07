@@ -1,0 +1,64 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13 00000000 5777                        a dw 0111011101010111b
+    14 00000002 00000000                    b dd 0
+    15                                  
+    16                                  ; our code starts here
+    17                                  segment code use32 class=code
+    18                                      start:
+    19                                          
+    20 00000000 BB00000000                      mov ebx,0 ; we compute the result in ebx
+    21                                          
+    22                                          ;the bits 0-3 of B have the value 0;
+    23 00000005 83E3F0                          and ebx,11111111111111111111111111110000b
+    24                                          
+    25                                          ;the bits 4-7 of B are the same as the bits 8-11 of A
+    26 00000008 66A1[00000000]                  mov ax,[a]
+    27 0000000E 6625000F                        and ax,0000111100000000b
+    28 00000012 B104                            mov cl,4
+    29 00000014 66D3C8                          ror ax,cl   ;
+    30 00000017 66BA0000                        mov dx,0
+    31 0000001B 6652                            push dx
+    32 0000001D 6650                            push ax
+    33 0000001F 58                              pop eax
+    34 00000020 09C3                            or ebx,eax
+    35                                          
+    36                                          ;the bits 8-9 and 10-11 of B are the invert of the bits 0-1 of A (so 2 times) ;???????????
+    37 00000022 66A1[00000000]                  mov ax,[a]  ;ax:=a
+    38 00000028 66F7D0                          not ax
+    39 0000002B 6683E003                        and ax,0000000000000011b ; ax has the first two bits of A
+    40 0000002F 668B15[00000000]                mov dx,[a]
+    41 00000036 66F7D2                          not dx
+    42 00000039 6683E203                        and dx,0000000000000011b   ;dx has the first two bits of A
+    43 0000003D 66C1C202                        rol dx,2
+    44 00000041 6609D0                          or ax,dx    ;ax has the the firt 4 bits the invert of the bits 0-1 of A (so 2 times)
+    45 00000044 66C1C008                        rol ax,8
+    46 00000048 66BA0000                        mov dx,0    ;ax:dx:= ax
+    47 0000004C 6652                            push dx
+    48 0000004E 6650                            push ax
+    49 00000050 58                              pop eax
+    50 00000051 09C3                            or ebx,eax
+    51                                          
+    52                                          ;bitii 12-15 ai lui B sunt biti de 1
+    53 00000053 81CB00F00000                    or ebx,00000000000000001111000000000000b 
+    54                                          
+    55                                          ;bitii 16-31 ai lui B sunt identici cu bitii 0-15 ai lui B.
+    56                                          ;mov cl,16
+    57 00000059 6689D8                          mov ax,bx
+    58 0000005C C1C310                          rol ebx,16 ; the bits 16-31 of B are the previous 16 bits of B
+    59 0000005F 6689C3                          mov bx,ax
+    60                                          
+    61                                          
+    62                                          ; exit(0)
+    63 00000062 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    64 00000064 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

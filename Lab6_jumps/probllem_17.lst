@@ -1,0 +1,83 @@
+     1                                  bits 32
+     2                                  global start
+     3                                  extern exit
+     4                                  import exit msvcrt.dll
+     5                                  
+     6                                  segment data use32 class=data
+     7 00000000 78563412CDAB561244-         sir DD 12345678h, 1256ABCDh, 12AB4344h
+     7 00000009 43AB12             
+     8                                      len equ ($-sir)/4
+     9 0000000C 0000<rept>                  ord times len DW 0
+    10 00000012 00000000<rept>              rez times len DD 0
+    11                                      
+    12                                  segment code use32 class=code
+    13                                      start:
+    14 00000000 B903000000                  mov ecx,len
+    15 00000005 BE[00000000]                mov esi,sir
+    16 0000000A BF[0C000000]                mov edi,ord
+    17                                      
+    18                                      repeat1:
+    19                                      ; will put in ord low words from sir
+    20 0000000F 66AD                            lodsw   ; will put in ax the low part of the dword
+    21 00000011 66AB                            stosw   ; will put in edi:= AX
+    22 00000013 46                              inc esi
+    23 00000014 46                              inc esi ; we move esi to the high word of the next dword
+    24 00000015 E2F8                        loop repeat1
+    25                                  
+    26 00000017 66BA0100                    mov dx, 1 ;dx will tell if the string ord  is sorted or not
+    27                                      
+    28                                      order:
+    29 0000001B 6683FA00                        cmp dx,0
+    30 0000001F 742F                            je part2;;;
+    31                                          
+    32 00000021 BE[0C000000]                    mov esi, ord    ;prepare the parsing of string “ord”; set the starting offset in Esi
+    33 00000026 66BA0000                        mov dx,0    
+    34 0000002A B902000000                      mov ecx, len-1
+    35                                          
+    36                                          repeat2:
+    37 0000002F 668B06                              mov ax, word[esi]   ;ax = ord[i]
+    38 00000032 668B5E02                            mov bx, word[esi+2]
+    39 00000036 6639D8                              cmp ax, bx     ;fictional substraction affecting flags of the word from ord and the next word
+    40 00000039 730F                                jae next
+    41                                              
+    42 0000003B 668B5602                            mov dx, word[esi+2] ;aux = ord[i+1];
+    43 0000003F 668916                              mov word[esi], dx   ; ord[i] = aux
+    44 00000042 66894602                            mov word[esi+2], ax ; ord[i+1] = ord[i];
+    45 00000046 66BA0100                            mov dx, 1   ;set dx in order to signalize that an interchange happened
+    46                                              
+    47                                              next:
+    48 0000004A 46                                      inc esi
+    49 0000004B 46                                      inc esi ; esi moves to the next word
+    50 0000004C E2E1                                    loop repeat2 ; resume repeat2 if we did not reach the end of string “ord”
+    51 0000004E EBCB                                    jmp order   ; otherwise resume the order cycle.
+    52                                              
+    53                                      ; ord is orderd descending
+    54                                  
+    55                                      part2:
+    56 00000050 B903000000                      mov ecx,len
+    57 00000055 BE[0C000000]                    mov esi,ord
+    58 0000005A BF[12000000]                    mov edi,rez
+    59                                          repeat3:
+    60 0000005F 66AD                                lodsw   
+    61 00000061 66AB                                stosw
+    62 00000063 47                                  inc edi
+    63 00000064 47                                  inc edi ; will put esi in rez on the second word of each dword (low word in forming dword)
+    64 00000065 E2F8                            loop repeat3
+    65                                          
+    66 00000067 B903000000                      mov ecx,len
+    67 0000006C BE[00000000]                    mov esi,sir
+    68 00000071 BF[12000000]                    mov edi,rez
+    69                                          
+    70                                          repeat4:
+    71 00000076 66AD                                lodsw
+    72 00000078 66AD                                lodsw   ; copy in ax the high word
+    73 0000007A 47                                  inc edi
+    74 0000007B 47                                  inc edi ; will put esi in rez on the second word of each dword (low word in forming dword)
+    75 0000007C 66AB                                stosw   ; store the high word
+    76 0000007E E2F6                            loop repeat4
+    77                                      
+    78                                      
+    79 00000080 6A00                        push dword 0
+    80 00000082 FF15[00000000]              call [exit]
+    81                                          
+    82                                  ; question ---- example why 2xlodsd loads first low and than high part

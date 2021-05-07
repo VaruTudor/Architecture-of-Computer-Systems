@@ -1,0 +1,73 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  extern exit, printf, scanf
+     5                                  import exit msvcrt.dll
+     6                                  import printf msvcrt.dll
+     7                                  import scanf msvcrt.dll
+     8                                  
+     9                                  ;Read a decimal number and a hexadecimal number from the keyboard. Display the number of 1's of the sum of the two numbers in decimal format. Example:
+    10                                  ;a = 32 = 0010 0000b
+    11                                  ;b = 1Ah = 0001 1010b
+    12                                  ;32 + 1Ah = 0011 1010b
+    13                                  ;The value printed on the screen will be 4
+    14                                  
+    15                                  
+    16                                  
+    17                                  segment data use32 class=data
+    18 00000000 00000000                    a dd 0
+    19 00000004 00000000                    b dd 0
+    20 00000008 20                          whilee db 32
+    21                                      
+    22 00000009 613D2000                    A db 'a= ', 0
+    23 0000000D 623D2000                    B db 'b= ', 0
+    24 00000011 256400                      format1 db '%d', 0
+    25 00000014 257800                      format2 db '%x', 0
+    26                                      
+    27 00000017 74686520726573756C-         result db 'the result is %d', 0
+    27 00000020 7420697320256400   
+    28                                  
+    29                                  segment code use32 class=code
+    30                                      start:
+    31 00000000 68[09000000]                    push dword A
+    32 00000005 FF15[00000000]                  call [printf]
+    33 0000000B 83C404                          add esp, 4
+    34                                          
+    35 0000000E 68[00000000]                    push dword a
+    36 00000013 68[11000000]                    push format1
+    37 00000018 FF15[00000000]                  call [scanf]
+    38 0000001E 83C408                          add esp, 8
+    39                                          
+    40 00000021 68[0D000000]                    push dword B
+    41 00000026 FF15[00000000]                  call [printf]
+    42 0000002C 83C404                          add esp, 4
+    43                                          
+    44 0000002F 68[04000000]                    push dword b
+    45 00000034 68[14000000]                    push format2
+    46 00000039 FF15[00000000]                  call [scanf]
+    47 0000003F 83C408                          add esp, 8
+    48                                          
+    49 00000042 A1[00000000]                    mov eax, [a]
+    50 00000047 0305[04000000]                  add eax, [b]    ;eax:= a+b
+    51                                          
+    52 0000004D B320                            mov bl, 32  ; bl counts how many times we repeat the cycle
+    53 0000004F B700                            mov bh, 0   ; in bh we keep the no 1s        
+    54                                          repeat1:
+    55 00000051 FECB                                dec bl
+    56 00000053 F8                                  clc ; cf:=0
+    57 00000054 D1D8                                rcr eax,1
+    58 00000056 80D700                              adc bh,0
+    59 00000059 80FB00                              cmp bl,0
+    60 0000005C 75F3                                jne repeat1
+    61                                          
+    62 0000005E B800000000                      mov eax, 0
+    63 00000063 88F8                            mov al,bh
+    64                                          
+    65 00000065 50                              push eax
+    66 00000066 68[17000000]                    push result
+    67 0000006B FF15[00000000]                  call [printf]
+    68 00000071 83C408                          add esp, 8
+    69                                          
+    70                                          
+    71 00000074 6A00                            push dword 0
+    72 00000076 FF15[00000000]                  call [exit]
